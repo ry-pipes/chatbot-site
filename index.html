@@ -1,0 +1,1033 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bankruptcy Co-Pilot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .audio-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .audio-wave .bar {
+            width: 3px;
+            height: 10px;
+            background-color: #fff;
+            margin: 0 2px;
+            animation: audio-wave-animation 1.5s infinite ease-in-out;
+        }
+
+        .audio-wave .bar:nth-child(1) {
+            animation-delay: -1.2s;
+        }
+
+        .audio-wave .bar:nth-child(2) {
+            animation-delay: -1s;
+        }
+
+        .audio-wave .bar:nth-child(3) {
+            animation-delay: -0.8s;
+        }
+
+        .audio-wave .bar:nth-child(4) {
+            animation-delay: -0.6s;
+        }
+
+        .audio-wave .bar:nth-child(5) {
+            animation-delay: -0.4s;
+        }
+
+        @keyframes audio-wave-animation {
+            0%, 100% {
+                height: 5px;
+            }
+            50% {
+                height: 20px;
+            }
+        }
+
+        .status-text {
+            position: absolute;
+            bottom: -30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #fff;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: typing-indicator-animation 1s infinite;
+        }
+
+        @keyframes typing-indicator-animation {
+            0% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.2;
+            }
+        }
+
+        .chat-container.hidden {
+            right: -100%;
+        }
+
+        .audio-wave {
+            display: none;
+        }
+
+        .audio-wave.active {
+            display: flex;
+        }
+
+        .toggle-icon .banner {
+            display: none;
+        }
+
+        .toggle-icon:hover .banner {
+            display: inline-block;
+        }
+
+        .nav-menu {
+            width: 100%;
+            height: 3rem;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link {
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            transition: color 0.3s;
+            color: #4B5563;
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+
+        .menu-text {
+            display: block;
+            font-size: 0.75rem;
+        }
+
+        .nav-link:hover,
+        .nav-link:focus,
+        .nav-link.active {
+            color: #60A5FA;
+        }
+
+        .welcome-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 2rem;
+            color: #fff;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .welcome-message.active {
+            display: block;
+        }
+
+        .welcome-message p {
+            margin: 10px 0;
+        }
+
+        .welcome-message i {
+            margin-right: 8px;
+        }
+
+        .button-drawer {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #1F2937; /* Tailwind gray-800 */
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            padding: 20px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button-drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-button {
+            background-color: #10B981; /* Tailwind green-500 */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .drawer-button:hover {
+            background-color: #059669; /* Tailwind green-600 */
+        }
+
+        .close-drawer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .tool-icon {
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .tool-icon:hover::after {
+            content: "Tools";
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4B5563;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .transcript-window {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .transcript-window.active {
+            display: block;
+        }
+
+        .transcript-window .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .transcript-window .download-button,
+        .transcript-window .save-button {
+            background-color: #10B981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .analysis-window {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .analysis-window.active {
+            display: block;
+        }
+
+        .analysis-window .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .analysis-window .edit-button,
+        .analysis-window .save-button {
+            background-color: #10B981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            z-index: 200;
+        }
+
+        .spinner.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+       .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+        }
+       
+        .command-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.command-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #4B5563;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /* Position above the text */
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.command-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+.modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-cover bg-center bg-no-repeat bg-black text-white font-mulish" style="background-image: url('https://i.imgur.com/WKqkUDA.jpg');">
+    <div class="flex flex-col h-screen">
+        <!-- Main Content -->
+        <div class="flex-grow relative">
+            
+            <button class="drawer-button text-white rounded-full p-2 mr-4" onclick="openSignUp()">
+                👤 Login/Sign Up
+            </button>
+        
+            <div class="welcome-message">
+                <p>Welcome to Bankruptcy Co-Pilot! 🚀</p>
+                <p>How can we assist you today? 💼</p>
+                <p>With Banksz, you can:</p>
+                <input type="text" id="feature-scroll" class="bg-gray-800 text-white p-2 rounded-md" readonly>            </div>
+            <div class="flex justify-end items-center h-full">
+                <div class="toggle-icon text-2xl cursor-pointer mr-5 fixed top-5 right-5 z-50" onclick="toggleChat()">
+                    <span class="bg-white text-black p-1 rounded-md text-sm mr-2 banner">Chat with Co-Pilot</span>
+                    <i class="fas fa-balance-scale"></i> <!-- Larger scales icon -->
+                </div>
+                <div class="w-full md:w-1/2 lg:w-1/3 h-full bg-black bg-opacity-80 p-5 fixed top-0 right-0 transition-all duration-300 flex flex-col chat-container">
+                    <div class="flex items-center mb-5">
+                        <h2 class="text-xl font-bold flex-grow">Bankruptcy Co-Pilot</h2>
+                        <button class="text-white" onclick="toggleDrawer()">☰</button>
+                    </div>
+                    <div class="bg-cover bg-center w-48 h-48 rounded-full mx-auto relative mb-5" style="background-image: url('https://i.imgur.com/QIFI7fq.jpg');">
+                        <div class="absolute bottom-0 left-0 w-full flex justify-center items-center p-1 bg-white bg-opacity-50 audio-wave">
+                            <div class="w-1 h-2.5 bg-white mx-0.5 animate-pulse bar"></div>
+                            <div class="w-1 h-2.5 bg-white mx-0.5 animate-pulse bar"></div>
+                            <div class="w-1 h-2.5 bg-white mx-0.5 animate-pulse bar"></div>
+                            <div class="w-1 h-2.5 bg-white mx-0.5 animate-pulse bar"></div>
+                            <div class="w-1 h-2.5 bg-white mx-0.5 animate-pulse bar"></div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 w-full text-center text-xs text-white status-text">Happily listening...</div>
+                    </div>
+                    <div class="command-tooltip">
+                        <textarea id="user-input-field" class="w-full p-2.5 bg-gray-200 text-black rounded-md mb-2.5 resize-none overflow-y-auto leading-6 text-lg" placeholder="Type your message or use commands: /voice, /analyze, /createreport, /creditormatrix" title="Available commands:&#10;/voice - Start voice input&#10;/analyze - Analyze uploaded file&#10;/createreport - Generate a report&#10;/creditormatrix - Create a creditor matrix"></textarea>
+                        <div class="tooltip-text">
+                            <p>Example commands:</p>
+                            <ul>
+                                <li>/v - to interact with voice</li>
+                                <li>/a - for attorneys</li>
+                                <li>/b - for general bankruptcy questions</li>
+                                <li>/n - new client interview</li>
+                                <li>/c - creditor lookup</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flex items-center mb-2.5">
+                        <input type="checkbox" id="toggleReadAloud" class="mr-2" checked>
+                        <label for="toggleReadAloud" class="text-sm">Read Responses Aloud ('esc' to stop)</label>
+                        <i class="fas fa-microphone tool-icon" onclick="toggleVoiceInput()"></i>
+                        <i class="fas fa-file tool-icon" onclick="openFileUpload()"></i>
+                        <i class="fas fa-tools tool-icon" onclick="toggleDrawer()"></i>
+                    </div>
+                    <div id="response-container" class="flex-grow overflow-y-auto p-2.5 bg-white text-black rounded-md mt-2.5"></div>
+                </div>
+                <div class="button-drawer" id="buttonDrawer">
+                    <span class="close-drawer" onclick="toggleDrawer()">&times;</span>
+                    <button class="drawer-button" onclick="openCreditorLookup()">🔍 Creditor Lookup</button>
+                    <button class="drawer-button" id="voice-typing-button">🎤 Voice Typing</button>
+                    <button class="drawer-button" onclick="openTranscriptWindow()">💬 Transcript</button>
+                    <button class="drawer-button" onclick="openFileUpload()">📄 Upload File</button>
+                    <button class="drawer-button" onclick="openSignUp()">🚀 Sign Up Now</button>
+                </div>
+            </div>
+        </div>
+        <!-- Skinny Nav Bar -->
+        <div class="nav-menu w-full h-12 fixed bottom-0 left-0 bg-gray-800 flex justify-around items-center text-white">
+            <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-home"></i>
+                <span class="menu-text">Home</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-envelope"></i>
+                <span class="menu-text">Messages</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-chart-bar"></i>
+                <span class="menu-text">Analytics</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-cog"></i>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-user"></i>
+                <span class="menu-text">Account</span>
+            </a>
+        </div>
+    </div>
+
+   <div class="transcript-window" id="transcriptWindow">
+        <span class="close-button" onclick="closeTranscriptWindow()">&times;</span>
+        <h2>Conversation Transcript</h2>
+        <div id="transcriptContent"></div>
+        <button class="download-button" onclick="downloadTranscript()">Download</button>
+        <button class="save-button" onclick="saveTranscript()">Save</button>
+    </div>
+
+    <div class="analysis-window" id="analysisWindow">
+        <span class="close-button" onclick="closeAnalysisWindow()">&times;</span>
+        <h2>Analysis Results</h2>
+        <div id="analysisContent" contenteditable="true"></div>
+        <button class="edit-button" onclick="editAnalysis()">Edit</button>
+        <button class="save-button" onclick="saveAnalysis()">Save</button>
+    </div>
+
+    <div class="spinner" id="spinner"></div>
+    <script>
+        const chatContainer = document.querySelector('.chat-container');
+        const toggleIcon = document.querySelector('.toggle-icon');
+        const userInputField = document.getElementById('user-input-field');
+        const responseContainer = document.getElementById('response-container');
+        const audioWave = document.querySelector('.audio-wave');
+        const statusText = document.querySelector('.status-text');
+        const welcomeMessage = document.querySelector('.welcome-message');
+        const buttonDrawer = document.getElementById('buttonDrawer');
+        
+        function toggleChat() {
+            chatContainer.classList.toggle('hidden');
+            welcomeMessage.classList.toggle('active');
+        }
+        
+        function toggleDrawer() {
+            buttonDrawer.classList.toggle('open');
+        }
+        
+        userInputField.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        userInputField.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                processUserInput();
+            }
+        });
+        
+        let recognitionTimeout;
+        let isVoiceMode = false;
+        let recognition;
+        
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+        
+            recognition.onresult = function (event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+        
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+        
+                if (isVoiceMode) {
+                    userInputField.value = finalTranscript + interimTranscript;
+        
+                    // Send the transcribed text when the user pauses or stops speaking
+                    if (finalTranscript.trim() !== '') {
+                        clearTimeout(recognitionTimeout);
+                        recognitionTimeout = setTimeout(() => {
+                            sendMessage(finalTranscript.trim());
+                            finalTranscript = '';
+                        }, 1000); // Adjust the timeout duration as needed
+                    }
+                }
+            };
+        
+            recognition.onend = function () {
+                if (isVoiceMode) {
+                    recognition.start();
+                }
+            };
+        } else {
+            console.log('Web Speech API is not supported in this browser.');
+        }
+        
+        function startVoiceInput() {
+            isVoiceMode = true;
+            userInputField.setAttribute('placeholder', 'Speak now...');
+            audioWave.classList.add('active');
+            statusText.textContent = 'Listening...';
+            recognition.start();
+        }
+        
+        function stopVoiceInput() {
+            isVoiceMode = false;
+            userInputField.setAttribute('placeholder', 'Type your message...');
+            audioWave.classList.remove('active');
+            statusText.textContent = '';
+            recognition.stop();
+        }
+        
+        function toggleVoiceInput() {
+            if (isVoiceMode) {
+                stopVoiceInput();
+            } else {
+                startVoiceInput();
+            }
+        }
+        
+        function executeCommand(command) {
+            switch (command) {
+                case '/voice':
+                    toggleVoiceInput();
+                    break;
+                case '/analyze':
+                    openFileUpload();
+                    break;
+                case '/createreport':
+                    createReport();
+                    break;
+                case '/creditormatrix':
+                    createCreditorMatrix();
+                    break;
+                default:
+                    alert('Invalid command. Please use one of the available commands.');
+            }
+        }
+        
+        function processUserInput() {
+            const message = userInputField.value.trim();
+            if (message !== '') {
+                if (message.startsWith('/')) {
+                    const command = message.split(' ')[0];
+                    executeCommand(command);
+                } else {
+                    sendMessage(message);
+                }
+        
+                userInputField.value = '';
+                userInputField.style.height = 'auto';
+            }
+        }
+        
+        function executeCommand(command) {
+            switch (command) {
+                case '/voice':
+                    isVoiceMode = !isVoiceMode;
+                    if (isVoiceMode) {
+                        userInputField.setAttribute('placeholder', 'Speak now...');
+                        audioWave.classList.add('active');
+                        statusText.textContent = 'Listening...';
+                        recognition.start();
+                    } else {
+                        userInputField.setAttribute('placeholder', 'Type your message...');
+                        audioWave.classList.remove('active');
+                        statusText.textContent = '';
+                        recognition.stop();
+                    }
+                    break;
+                case '/analyze':
+                    openFileUpload();
+                    break;
+                case '/createreport':
+                    createReport();
+                    break;
+                case '/creditormatrix':
+                    createCreditorMatrix();
+                    break;
+                default:
+                    alert('Invalid command. Please use one of the available commands.');
+            }
+        }
+        
+        function sendMessage(message) {
+            // Clear the response container
+            responseContainer.innerHTML = '';
+        
+            // Append the user's message to the response container
+            const userMessage = document.createElement('div');
+            userMessage.textContent = 'User: ' + message;
+            responseContainer.appendChild(userMessage);
+        
+            // Send the message to the Flask app
+            fetch('https://www.bankszapi.com/banksz/generate_speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `text=${encodeURIComponent(message)}`,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    // Display the assistant's response as text
+                    const assistantMessage = document.createElement('div');
+                    assistantMessage.innerHTML = 'Assistant: ' + data.text;
+                    responseContainer.appendChild(assistantMessage);
+        
+                    // Decode the Base64-encoded audio data
+                    const audioData = atob(data.audio);
+        
+                    // Create a Uint8Array from the decoded audio data
+                    const audioArray = new Uint8Array(audioData.split('').map(char => char.charCodeAt(0)));
+        
+                    // Create a Blob from the audio array
+                    const audioBlob = new Blob([audioArray], { type: 'audio/ogg' });
+        
+                    // Create a URL for the audio blob
+                    const audioUrl = URL.createObjectURL(audioBlob);
+        
+                    // Play the audio
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+        
+                    // Start voice recognition
+                    if (isVoiceMode) {
+                        recognition.start();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+        
+        function createReport() {
+            // Implement your report generation logic here
+            // Parse key financial data and return it via markdown
+            const reportData = {
+                income: 5000,
+                expenses: 3500,
+                debts: [
+                    { creditor: 'Bank A', amount: 10000 },
+                    { creditor: 'Credit Card B', amount: 5000 },
+                    { creditor: 'Loan C', amount: 15000 }
+                ]
+            };
+        
+            let reportMarkdown = '# Financial Report\n\n';
+            reportMarkdown += `**Income:** $${reportData.income}\n`;
+            reportMarkdown += `**Expenses:** $${reportData.expenses}\n\n`;
+            reportMarkdown += '## Debts\n';
+            reportData.debts.forEach(debt => {
+                reportMarkdown += `- ${debt.creditor}: $${debt.amount}\n`;
+            });
+        
+            // Display the report in the response container
+            const reportElement = document.createElement('div');
+            reportElement.innerHTML = marked(reportMarkdown);
+            responseContainer.appendChild(reportElement);
+        }
+        
+        function createCreditorMatrix() {
+            // Implement your creditor matrix creation logic here
+            const creditors = [
+                { name: 'Bank A', address: '123 Main St, City, State, ZIP' },
+                { name: 'Credit Card B', address: '456 Elm St, City, State, ZIP' },
+                { name: 'Loan C', address: '789 Oak St, City, State, ZIP' }
+            ];
+        
+            let matrixMarkdown = '# Creditor Matrix\n\n';
+            creditors.forEach(creditor => {
+                matrixMarkdown += `**${creditor.name}**\n`;
+                matrixMarkdown += `${creditor.address}\n\n`;
+            });
+        
+            // Display the creditor matrix in the response container
+            const matrixElement = document.createElement('div');
+            matrixElement.innerHTML = marked(matrixMarkdown);
+            responseContainer.appendChild(matrixElement);
+        }
+        
+        function openFileUpload() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.txt,.doc,.docx,.pdf,.jpg,.jpeg,.png';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        
+            fileInput.onchange = function (event) {
+                const file = event.target.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+        
+                // Determine the file type based on the file extension
+                const fileType = file.name.split('.').pop().toLowerCase();
+        
+                // Set the appropriate file type in the form data
+                if (fileType === 'txt' || fileType === 'doc' || fileType === 'docx' || fileType === 'pdf') {
+                    formData.append('fileType', 'document');
+                } else if (fileType === 'jpg' || fileType === 'jpeg' || fileType === 'png') {
+                    formData.append('fileType', 'image');
+                }
+        
+                // Send the file to the server for analysis
+                fetch('https://www.bankszapi.com/upload_image', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    spinner.classList.remove('active');
+                    if (data.success) {
+                        // Display the analysis results
+                        analysisWindow.classList.add('active');
+                        analysisContent.innerText = data.result;
+                    } else {
+                        alert('Error analyzing the file. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    spinner.classList.remove('active');
+                    console.error('Error:', error);
+                    alert('An error occurred while analyzing the file. Please try again.');
+                });
+        
+                spinner.classList.add('active');
+            };
+        }
+        
+        function closeAnalysisWindow() {
+            analysisWindow.classList.remove('active');
+        }
+        
+        function editAnalysis() {
+            analysisContent.setAttribute('contenteditable', 'true');
+        }
+        
+        function saveAnalysis() {
+            analysisContent.setAttribute('contenteditable', 'false');
+            const analysisText = analysisContent.innerText;
+            // Implement your save functionality here
+            alert('Analysis saved!');
+        }
+        
+        function openCreditorLookup() {
+            // Implement your creditor lookup functionality here
+            alert('Creditor lookup feature coming soon!');
+        }
+        
+        function openSignUp() {
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Fetch the signup.html template and load it into the modal
+            fetch('/get_sign_up_form')
+                .then(response => response.text())
+                .then(html => {
+                    const modalContent = modal.querySelector('.modal-content');
+                    modalContent.innerHTML = html;
+                    modal.classList.add('active');
+
+                    // Add event listener to the close button inside the modal content
+                    const modalCloseBtn = modalContent.querySelector('.close-btn');
+                    modalCloseBtn.addEventListener('click', () => {
+                        modal.classList.remove('active');
+                        setTimeout(() => {
+                            document.body.removeChild(modal);
+                        }, 300);
+                    });
+
+                    // Add event listener to the signup/login toggle buttons
+                    const signupBtn = modalContent.querySelector('button[onclick="showForm(\'signup\')"]');
+                    const loginBtn = modalContent.querySelector('button[onclick="showForm(\'login\')"]');
+                    signupBtn.addEventListener('click', () => showForm('signup'));
+                    loginBtn.addEventListener('click', () => showForm('login'));
+                })
+                .catch(error => {
+                    console.error('Error fetching signup template:', error);
+                });
+        }
+    
+        const featureScroll = document.getElementById('feature-scroll');
+        const features = [
+            'Ask questions',
+            'Check the median income',
+            'Lookup Creditor Addresses',
+            'Talk to the bankruptcy code'
+        ];
+        let currentFeatureIndex = 0;
+        function scrollFeatures() {
+            featureScroll.value = features[currentFeatureIndex];
+            currentFeatureIndex = (currentFeatureIndex + 1) % features.length;
+        }
+        
+        scrollFeatures();
+        setInterval(scrollFeatures, 2000);
+        function executeCommand(command) {
+            switch (command) {
+                case '/voice':
+                    fetch('/voice_command', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `command=${encodeURIComponent(command)}`,
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            isVoiceMode = !isVoiceMode;
+                            if (isVoiceMode) {
+                                userInputField.setAttribute('placeholder', 'Speak now...');
+                                audioWave.classList.add('active');
+                                statusText.textContent = 'Listening...';
+                                recognition.start();
+                            } else {
+                                userInputField.setAttribute('placeholder', 'Type your message...');
+                                audioWave.classList.remove('active');
+                                statusText.textContent = '';
+                                recognition.stop();
+                            }
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                    break;
+                // ... (other command cases)
+            }
+        }
+        function signup(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    // Send the signup data to the server
+    fetch('/signup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+    })
+    .then(response => {
+        if (response.ok) {
+            // Signup successful, redirect to a protected page or update the UI
+            window.location.href = '/protected';
+        } else {
+            // Signup failed, display an error message
+            alert('Signup failed. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function login(event) {
+    event.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    // Send the login data to the server
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+    })
+    .then(response => {
+        if (response.ok) {
+            // Login successful, redirect to a protected page or update the UI
+            window.location.href = '/protected';
+        } else {
+            // Login failed, display an error message
+            alert('Login failed. Please check your credentials and try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function logout() {
+    // Send a logout request to the server
+    fetch('/logout', {
+        method: 'GET',
+    })
+    .then(response => {
+        if (response.ok) {
+            // Logout successful, redirect to the login page or update the UI
+            window.location.href = '/';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+        </script>
+</body>
+</html>
